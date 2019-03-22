@@ -4,42 +4,42 @@
 <script src="https://unpkg.com/vue"></script>
 <script src="https://unpkg.com/vue-numeric"></script>
 
-<div id="app" class="container-fluid">
+<div id="app" class="container">
     <div class="row">
         <div class="col-lg-12 col-xl-6 align-self-center">
             <h1>Unser Sparkalkulator</h1>
             <div class="row">
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-6 align-self-center">
                     <label for="pricePerLiterInput">Preis pro Liter Mineralwasser:</label>
                 </div>
-                <div class="col-12 col-sm-6" style="text-align: right;">
+                <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric currency="€" precision="2" separator="." currency-symbol-position="suffix"
-                        id="pricePerLiterInput" v-model="pricePerLiter">
+                        id="pricePerLiterInput" v-model="pricePerLiter" type="text">
                 </div>
             </div>
             <div class="row">
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-6 align-self-center">
                     <label for="peoplePerHouseholdInput">Personen im Haushalt:</label>
                 </div>
-                <div class="col-12 col-sm-6" style="text-align: right;">
-                    <vue-numeric min="0" separator="." id="peoplePerHouseholdInput" v-model="peoplePerHousehold">
+                <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
+                    <vue-numeric min="0" separator="." id="peoplePerHouseholdInput" type="text" v-model="peoplePerHousehold">
                 </div>
             </div>
             <div class="row">
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-6 align-self-center">
                     <label for="drinkingWaterConsumptionInput">Trinkwasserverbrauch pro Person und Tag:</label>
                 </div>
                 <div class="col-12 col-sm-6" style="text-align: right;">
                     <vue-numeric currency="Liter" separator="." presiion currency-symbol-position="suffix"
-                        id="drinkingWaterConsumptionInput" v-model="drinkingWaterConsumption">
+                        id="drinkingWaterConsumptionInput" v-model="drinkingWaterConsumption" type="text">
                 </div>
             </div>
             <div class="row">
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-6 align-self-center">
                     <label for="filterPriceInput">Kosten MvL Wasserfilter:</label>
                 </div>
-                <div class="col-12 col-sm-6" style="text-align: right;">
-                    <vue-numeric currency="€" read-only-class="true" tabindex="-1" style="background: #eeeeee;"
+                <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
+                    <vue-numeric type="text" currency="€" read-only-class="true" tabindex="-1" style="background: #eeeeee;"
                         precision="2" separator="." currency-symbol-position="suffix" id="filterPriceInput" disabled
                         v-model="filterPrice">
                 </div>
