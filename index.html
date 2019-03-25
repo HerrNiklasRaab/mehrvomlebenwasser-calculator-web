@@ -1,5 +1,5 @@
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script src="https://unpkg.com/accounting-js"></script>
 <script src="https://unpkg.com/vue"></script>
 <script src="https://unpkg.com/vue-numeric"></script>
@@ -13,7 +13,7 @@
                     <label for="pricePerLiterInput">Preis pro Liter Mineralwasser:</label>
                 </div>
                 <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
-                    <vue-numeric currency="€" precision="2" separator="." currency-symbol-position="suffix"
+                    <vue-numeric currency="€" :precision="2" separator="." currency-symbol-position="suffix"
                         id="pricePerLiterInput" v-model="pricePerLiter" type="text">
                 </div>
             </div>
@@ -22,31 +22,23 @@
                     <label for="peoplePerHouseholdInput">Personen im Haushalt:</label>
                 </div>
                 <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
-                    <vue-numeric min="0" separator="." id="peoplePerHouseholdInput" type="text" v-model="peoplePerHousehold">
+                    <vue-numeric :min="0" separator="." id="peoplePerHouseholdInput" type="text"
+                        v-model="peoplePerHousehold">
                 </div>
             </div>
             <div class="row">
                 <div class="col-12 col-sm-6 align-self-center">
                     <label for="drinkingWaterConsumptionInput">Trinkwasserverbrauch pro Person und Tag:</label>
                 </div>
-                <div class="col-12 col-sm-6" style="text-align: right;">
-                    <vue-numeric currency="Liter" separator="." presiion currency-symbol-position="suffix"
-                        id="drinkingWaterConsumptionInput" v-model="drinkingWaterConsumption" type="text">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12 col-sm-6 align-self-center">
-                    <label for="filterPriceInput">Kosten MvL Wasserfilter:</label>
-                </div>
                 <div class="col-12 col-sm-6 align-self-center" style="text-align: right;">
-                    <vue-numeric type="text" currency="€" read-only-class="true" tabindex="-1" style="background: #eeeeee;"
-                        precision="2" separator="." currency-symbol-position="suffix" id="filterPriceInput" disabled
-                        v-model="filterPrice">
+                    <vue-numeric currency="Liter" separator="." :precision="2" currency-symbol-position="suffix"
+                        id="drinkingWaterConsumptionInput" v-model="drinkingWaterConsumption" type="text">
                 </div>
             </div>
         </div>
         <div class="col-lg-12 col-xl-6">
-            <div id="chart_div"></div>
+            <div><canvas id="chart_canvas" style="height: 400px;"></canvas></div>
+
         </div>
     </div>
 </div>
@@ -71,9 +63,6 @@
 
 
 <script>
-    google.charts.load('current', { 'packages': ['corechart'] });
-
-
     var customization = {
         defaultPricePerLiter: 0.5,
         defaultPeoplePerHousehold: 4,
@@ -83,11 +72,14 @@
         showThisManyYearsInChart: 5
     }
 
+
+
     Vue.use(VueNumeric.default)
 
 
     var app = new Vue({
         el: '#app',
+        chart: null,
         data: {
             pricePerLiter: customization.defaultPricePerLiter,
             peoplePerHousehold: customization.defaultPeoplePerHousehold,
@@ -100,43 +92,140 @@
             drinkingWaterConsumption: function () { this.updateStatistics(); },
             filterPrice: function () { this.updateStatistics(); }
         },
-        created: function () {
-            window.addEventListener('resize', this.updateStatistics);
-            google.charts.setOnLoadCallback(this.updateStatistics);
+        mounted: function () {
+            this.updateStatistics();
         },
         methods: {
             updateStatistics: function () {
                 if (isNaN(this.pricePerLiter) || this.pricePerLiter.length === 0) return;
 
                 var expensesOfWaterPerYear = (this.peoplePerHousehold * this.drinkingWaterConsumption * 365) * this.pricePerLiter;
-                var moneySavedInFirstYear = expensesOfWaterPerYear - this.filterPrice;
-                var moneySavedInFollowingYears = expensesOfWaterPerYear - customization.pricePerChangeableFilter;
-                var dataForChart = [
-                    ['Jahr', 'Kosten Einkauf Mineralwasser', 'Kosten Trinkwasser mit MEHR vom LEBEN Wasserfilter'],
-                    [1, expensesOfWaterPerYear, this.filterPrice]
-                ];
-                for (var i = 2; i < customization.showThisManyYearsInChart; i++) {
-                    dataForChart.push([i, expensesOfWaterPerYear * i, customization.pricePerChangeableFilter * i]);
+                var expensesForMineralWater = [expensesOfWaterPerYear];
+                var expensesForMehrVomLebenWasser = [this.filterPrice];
+                var labels = [1];
+                for (var i = 2; i <= customization.showThisManyYearsInChart; i++) {
+                    expensesForMineralWater.push(expensesOfWaterPerYear * i);
+                    expensesForMehrVomLebenWasser.push(this.filterPrice + customization.pricePerChangeableFilter * (i - 1));
+                    labels.push(i);
                 }
-                var data = google.visualization.arrayToDataTable(dataForChart);
 
-                var options = {
-                    title: 'So entwickeln sich ihre Trinkwasserkosten in den nächsten 5 Jahren',
-                    hAxis: { title: 'Jahr', titleTextStyle: { color: '#333' } },
-                    vAxis: { minValue: 0 },
-                    height: 350,
-                    animation: {
-                        duration: 500,
-                        startup: true //This is the new option
-                    },
-                    backgroundColor: { fill: 'transparent' }
-                };
+                var ctx = document.getElementById('chart_canvas').getContext('2d');
+                if (this.chart !== undefined) {
+                    this.chart.data.labels = labels;
+                    this.chart.data.datasets[0].data = expensesForMineralWater;
+                    this.chart.data.datasets[1].data = expensesForMehrVomLebenWasser;
+                    this.chart.update();
+                } else
+                    this.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: "Kosten Einkauf Mineralwasser",
 
-                var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
-            },
-            onResize: function (event) {
-                this.updateStatistics();
+                                data: expensesForMineralWater,
+                                borderColor: '#dc3912'
+                            }, {
+                                label: "Kosten Trinkwasser mit MEHR vom LEBEN Wasserfilter",
+                                data: expensesForMehrVomLebenWasser,
+                                borderColor: '#3366cc'
+                            },]
+                        },
+                        options: {
+                            showAllTooltips: true,
+                            animation: false,
+                            responsive: true,
+                            maintainAspectRatio: false,
+
+                            title: {
+                                display: true,
+                                text: 'Ihre Trinkwasserkosten in den nächsten 5 Jahren'
+                            },
+                            legend: {
+                                position: "bottom",
+                                onClick: function(){
+                                    return false;
+                                }
+                            },
+                            tooltips: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItems, data) {
+                                        return tooltipItems.yLabel + ' €';
+                                    },
+                                    title: function (tooltipItem, data) {
+                                        return '';
+                                    },
+                                },
+                                bodyFontColor: '#707070',
+                                backgroundColor: '#eee',
+                            },
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        callback: function (label, index, labels) {
+                                            return label + ' €';
+                                        }
+                                    },
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'Wasserkosten'
+                                    }
+                                }],
+                                xAxes: [{
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'Jahr'
+                                    }
+                                }]
+                            }
+                        }
+                    });
+            }
+        }
+    });
+
+    Chart.pluginService.register({
+        beforeRender: function (chart) {
+            if (chart.config.options.showAllTooltips) {
+                // create an array of tooltips
+                // we can't use the chart tooltip because there is only one tooltip per chart
+                chart.pluginTooltips = [];
+                chart.config.data.datasets.forEach(function (dataset, i) {
+                    chart.getDatasetMeta(i).data.forEach(function (sector, j) {
+                        chart.pluginTooltips.push(new Chart.Tooltip({
+                            _chart: chart.chart,
+                            _chartInstance: chart,
+                            _data: chart.data,
+                            _options: chart.options.tooltips,
+                            _active: [sector]
+                        }, chart));
+                    });
+                });
+
+                // turn off normal tooltips
+                chart.options.tooltips.enabled = false;
+            }
+        },
+        afterDraw: function (chart, easing) {
+            if (chart.config.options.showAllTooltips) {
+                // we don't want the permanent tooltips to animate, so don't do anything till the animation runs atleast once
+                if (!chart.allTooltipsOnce) {
+                    if (easing !== 1)
+                        return;
+                    chart.allTooltipsOnce = true;
+                }
+
+                // turn on tooltips
+                chart.options.tooltips.enabled = true;
+                Chart.helpers.each(chart.pluginTooltips, function (tooltip) {
+                    tooltip.initialize();
+                    tooltip.update();
+                    // we don't actually need this since we are not animating tooltips
+                    tooltip.pivot();
+                    tooltip.transition(easing).draw();
+                });
+                chart.options.tooltips.enabled = false;
             }
         }
     });
