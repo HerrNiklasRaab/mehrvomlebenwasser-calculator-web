@@ -14,7 +14,8 @@
                 </div>
                 <div class="mc-col-12 mc-col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric :min="0" :max="100000" currency="€" :precision="2" separator="."
-                        currency-symbol-position="suffix" onfocus="moveCurserToEnd(this);" id="pricePerLiterInput" v-model="pricePerLiter" type="text">
+                        currency-symbol-position="suffix" onfocus="moveCurserToEnd(this);" id="pricePerLiterInput"
+                        v-model="pricePerLiter" type="text">
                 </div>
             </div>
             <div class="mc-row">
@@ -32,7 +33,8 @@
                 </div>
                 <div class="mc-col-12 mc-col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric :min="0" :max="100000" currency="Liter" :precision="2" separator="."
-                        currency-symbol-position="suffix" id="drinkingWaterConsumptionInput" onfocus="moveCurserToEnd(this);" v-model="drinkingWaterConsumption" type="text">
+                        currency-symbol-position="suffix" id="drinkingWaterConsumptionInput"
+                        onfocus="moveCurserToEnd(this);" v-model="drinkingWaterConsumption" type="text">
                 </div>
             </div>
         </div>
@@ -103,7 +105,8 @@
         defaultDrinkingWaterConsumption: 1.5,
         defaultFilterPrice: 497.00,
         pricePerChangeableFilter: 240.00,
-        showThisManyYearsInChart: 5
+        showThisManyYearsInChart: 5,
+        showAllTooltips: false
     }
 
 
@@ -112,14 +115,16 @@
             if (chart.config.options.showAllTooltips) {
                 chart.pluginTooltips = [];
                 chart.config.data.datasets.forEach(function (dataset, i) {
-                    chart.getDatasetMeta(i).data.forEach(function (sector, j) {
-                        chart.pluginTooltips.push(new Chart.Tooltip({
-                            _chart: chart.chart,
-                            _chartInstance: chart,
-                            _data: chart.data,
-                            _options: chart.options.tooltips,
-                            _active: [sector]
-                        }, chart));
+                    var data = chart.getDatasetMeta(i).data;
+                    data.forEach(function (sector, j) {
+                        if (j === data.length - 1 || customization.showAllTooltips)
+                            chart.pluginTooltips.push(new Chart.Tooltip({
+                                _chart: chart.chart,
+                                _chartInstance: chart,
+                                _data: chart.data,
+                                _options: chart.options.tooltips,
+                                _active: [sector]
+                            }, chart));
                     });
                 });
 
