@@ -1,3 +1,24 @@
+<script>
+    var customization = {
+        defaultPricePerLiter: 0.65,
+        defaultPeoplePerHousehold: 3,
+        defaultDrinkingWaterConsumption: 1.5,
+        defaultFilterPrice: 597.00,
+        pricePerChangeableFilter: 240.00,
+        showThisManyYearsInChart: 5,
+        showAllTooltips: false,
+        header: "Und wieviel könnten sie sparen?",
+        labelPricePerLiter: "Preis pro Liter Mineralwasser:",
+        labelPeoplePerHousehold: "Personen im Haushalt:",
+        labelDrinkingWaterConsumption: "Trinkwasserverbrauch pro Person und Tag:",
+        headerChart: "Ihre Trinkwasserkosten in den nächsten 5 Jahren",
+        yAxisChartLabel: "Wasserkosten",
+        xAxisChartLabel: "Jahr(e)",
+        expensesMineralWaterLegend: "Kosten Einkauf Mineralwasser",
+        expensesForMehrVomLebenWasserLegend: "Kosten mit System Hausquelle"
+    }
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <script src="https://unpkg.com/accounting-js"></script>
@@ -7,10 +28,17 @@
 <div id="mc-app">
     <div class="mc-row">
         <div class="mc-col-12 mc-col-xl-6 align-self-center">
-            <h1>Unser Sparkalkulator</h1>
+            <h3 style="font-family:&#039;Dosis&#039;;font-weight:normal;margin-bottom:20px;">{{header}}</h3>
+            <p>Berechnen sie ihr persönliches Einsparpotenzial bei Verwendung unseres Hausquelle Wasserfilter-Systems
+                gegenüber ihrem Mineralwassereinkauf. Geben Sie ihren Einkaufspreis pro Liter Mineralwasser, die
+                Personen in ihrem Haushalt und die pro Person getrunkene Menge in Liter ein und sie sehen im Diagram die
+                Live-Auswertung ihres Sparpotenzials.</p>
+            <p>Bei der Berechnung sind die Anschaffungskosten bereits berücksichtigt.</p>
+            <h3 style="font-family:&#039;Dosis&#039;;font-weight:normal;margin-bottom:20px;">Ihre persönlichen Eingaben:
+            </h3>
             <div class="mc-row">
                 <div class="mc-col-12 mc-col-sm-6 align-self-center">
-                    <label for="pricePerLiterInput">Preis pro Liter Mineralwasser:</label>
+                    <label for="pricePerLiterInput">{{labelPricePerLiter}}</label>
                 </div>
                 <div class="mc-col-12 mc-col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric :min="0" :max="100000" currency="€" :precision="2" separator="."
@@ -20,7 +48,7 @@
             </div>
             <div class="mc-row">
                 <div class="mc-col-12 mc-col-sm-6 align-self-center">
-                    <label for="peoplePerHouseholdInput">Personen im Haushalt:</label>
+                    <label for="peoplePerHouseholdInput">{{labelPeoplePerHousehold}}</label>
                 </div>
                 <div class="mc-col-12 mc-col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric :min="0" :max="100000" separator="." id="peoplePerHouseholdInput" type="text"
@@ -29,7 +57,7 @@
             </div>
             <div class="mc-row">
                 <div class="mc-col-12 mc-col-sm-6 align-self-center">
-                    <label for="drinkingWaterConsumptionInput">Trinkwasserverbrauch pro Person und Tag:</label>
+                    <label for="drinkingWaterConsumptionInput">{{labelDrinkingWaterConsumption}}</label>
                 </div>
                 <div class="mc-col-12 mc-col-sm-6 align-self-center" style="text-align: right;">
                     <vue-numeric :min="0" :max="100000" currency="Liter" :precision="2" separator="."
@@ -99,17 +127,6 @@
 </style>
 
 <script>
-    var customization = {
-        defaultPricePerLiter: 0.5,
-        defaultPeoplePerHousehold: 4,
-        defaultDrinkingWaterConsumption: 1.5,
-        defaultFilterPrice: 497.00,
-        pricePerChangeableFilter: 240.00,
-        showThisManyYearsInChart: 5,
-        showAllTooltips: false
-    }
-
-
     Chart.pluginService.register({
         beforeRender: function (chart) {
             if (chart.config.options.showAllTooltips) {
@@ -160,7 +177,11 @@
             pricePerLiter: customization.defaultPricePerLiter,
             peoplePerHousehold: customization.defaultPeoplePerHousehold,
             drinkingWaterConsumption: customization.defaultDrinkingWaterConsumption,
-            filterPrice: customization.defaultFilterPrice
+            filterPrice: customization.defaultFilterPrice,
+            header: customization.header,
+            labelPricePerLiter: customization.labelPricePerLiter,
+            labelPeoplePerHousehold: customization.labelPeoplePerHousehold,
+            labelDrinkingWaterConsumption: customization.labelDrinkingWaterConsumption,
         },
         watch: {
             pricePerLiter: function () { this.updateStatistics(); },
@@ -180,8 +201,8 @@
                 var expensesForMehrVomLebenWasser = [this.filterPrice];
                 var labels = [1];
                 for (var i = 2; i <= customization.showThisManyYearsInChart; i++) {
-                    expensesForMineralWater.push(expensesOfWaterPerYear * i);
-                    expensesForMehrVomLebenWasser.push(this.filterPrice + customization.pricePerChangeableFilter * (i - 1));
+                    expensesForMineralWater.push(Number(expensesOfWaterPerYear * i).toFixed(0));
+                    expensesForMehrVomLebenWasser.push(Number(this.filterPrice + customization.pricePerChangeableFilter * (i - 1)).toFixed(0));
                     labels.push(i);
                 }
 
@@ -197,12 +218,12 @@
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: "Kosten Einkauf Mineralwasser",
+                                label: customization.expensesMineralWaterLegend,
 
                                 data: expensesForMineralWater,
                                 borderColor: '#dc3912'
                             }, {
-                                label: "Trinkwasserkosten mit unserem Wasserfilter",
+                                label: customization.expensesForMehrVomLebenWasserLegend,
                                 data: expensesForMehrVomLebenWasser,
                                 borderColor: '#3366cc'
                             },]
@@ -215,7 +236,7 @@
 
                             title: {
                                 display: true,
-                                text: 'Ihre Trinkwasserkosten in den nächsten 5 Jahren'
+                                text: customization.headerChart
                             },
                             legend: {
                                 position: "bottom",
@@ -245,13 +266,13 @@
                                     },
                                     scaleLabel: {
                                         display: true,
-                                        labelString: 'Wasserkosten'
+                                        labelString: customization.yAxisChartLabel
                                     }
                                 }],
                                 xAxes: [{
                                     scaleLabel: {
                                         display: true,
-                                        labelString: 'Jahr'
+                                        labelString: customization.xAxisChartLabel
                                     }
                                 }]
                             }
